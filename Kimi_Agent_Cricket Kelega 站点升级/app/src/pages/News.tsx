@@ -3,16 +3,7 @@ import { Newspaper, Clock, ChevronRight, Share2, Bookmark } from 'lucide-react';
 import Navigation from '../sections/Navigation';
 import Footer from '../sections/Footer';
 
-interface NewsArticle {
-  id: number;
-  title: string;
-  excerpt: string;
-  category: string;
-  author: string;
-  time: string;
-  image: string;
-  featured?: boolean;
-}
+
 
 // const newsArticles: NewsArticle[] = [
 //   {
