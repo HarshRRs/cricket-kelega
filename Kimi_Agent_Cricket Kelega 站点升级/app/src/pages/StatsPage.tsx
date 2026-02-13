@@ -189,7 +189,7 @@ export default function StatsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.map((player) => (
+                    {stats.map((player: PlayerStat) => (
                       <tr
                         key={player.rank}
                         className="border-t border-white/5 hover:bg-white/5 transition-colors"
@@ -211,7 +211,7 @@ export default function StatsPage() {
                         <td className="py-3 sm:py-4 px-3 sm:px-6">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-                              {player.player.split(' ').map(n => n[0]).join('')}
+                              {player.player.split(' ').map((n: string) => n[0]).join('')}
                             </div>
                             <div>
                               <span className="font-semibold text-white text-sm sm:text-base">{player.player}</span>
