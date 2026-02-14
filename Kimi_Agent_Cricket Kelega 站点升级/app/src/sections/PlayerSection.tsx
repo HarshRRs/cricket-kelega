@@ -100,10 +100,8 @@ export default function PlayerSection() {
     }
   }, [player]);
 
-  if (!player) return null; // Or skeleton
-
-  // Split name for display
-  const nameParts = player.name.split(' ');
+  // Split name for display - with fallback
+  const nameParts = player ? player.name.split(' ') : ['TOP', 'PLAYER'];
   const firstName = nameParts[0];
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
@@ -171,13 +169,13 @@ export default function PlayerSection() {
           <div className="stat-item text-center p-4 bg-white/5 rounded-lg">
             <div className="text-xs text-white/50 font-mono mb-1">RANK</div>
             <div className="font-display font-bold text-2xl lg:text-3xl text-white">
-              #{player.rank}
+              #{player?.rank || '---'}
             </div>
           </div>
           <div className="stat-item text-center p-4 bg-white/5 rounded-lg">
             <div className="text-xs text-white/50 font-mono mb-1">RATING</div>
             <div className="font-display font-bold text-2xl lg:text-3xl text-coral">
-              {player.rating}
+              {player?.rating || '---'}
             </div>
           </div>
         </div>
