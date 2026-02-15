@@ -17,7 +17,7 @@ def get_cricbuzz_matches():
         url = "https://www.cricbuzz.com/cricket-match/live-scores"
         response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
-        soup = BeautifulSoup(response.content, "lxml")
+        soup = BeautifulSoup(response.content, "html.parser")
         
         matches = []
         
@@ -96,8 +96,9 @@ def get_commentary(match_id):
     try:
         url = f"https://www.cricbuzz.com/live-cricket-scores/{match_id}/commentary"
         response = requests.get(url, headers=HEADERS, timeout=10)
+        response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
-        soup = BeautifulSoup(response.content, "lxml")
+        soup = BeautifulSoup(response.content, "html.parser")
         
         commentary_lines = []
         # Commentary lines are often in p.cb-com-ln (older) or div.cb-col.cb-col-100 ng-scope (angular)
