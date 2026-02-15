@@ -347,25 +347,31 @@ def get_rankings():
             
             data = scraper.get_icc_rankings(scrape_cat, fmt)
             
-            # Fallback Mock Data if Scraper Fails (for Deployment Verification)
+            # Fallback to Static JSON if Scraper Fails
             if not data:
-                # Mock data so user sees SOMETHING
-                if display_cat == 'Batsmen':
-                    data = [
-                        {"rank": "1", "name": "Kane Williamson (Mock)", "rating": "883", "country": "NZ"},
-                        {"rank": "2", "name": "Joe Root (Mock)", "rating": "859", "country": "ENG"},
-                        {"rank": "3", "name": "Steve Smith (Mock)", "rating": "842", "country": "AUS"}
-                    ]
-                elif display_cat == 'Bowlers':
-                    data = [
-                        {"rank": "1", "name": "R Ashwin (Mock)", "rating": "870", "country": "IND"},
-                        {"rank": "2", "name": "Kagiso Rabada (Mock)", "rating": "850", "country": "SA"}
-                    ]
+                print(f"Scraper failed for {display_cat} {fmt}, checking localized snapshot...")
+                try:
+                    import json
+                    with open("rankings.json", "r") as f:
+                        snapshot = json.load(f)
+                        # snapshot is list of {type, format, rank}
+                        # Find matching entry
+                        for entry in snapshot:
+                            if entry['type'] == display_cat and entry['format'] == fmt.upper():
+                                data = entry['rank']
+                                print(f"Loaded snapshot for {display_cat} {fmt}")
+                                break
+                except Exception as e:
+                    print(f"Snapshot load failed: {e}")
             
+            # If still no data, use old mock or empty?
+            if not data:
+                 print(f"No data available for {display_cat} {fmt}")
+                 
             all_rankings.append({
                 "type": display_cat,
                 "format": fmt.upper(),
-                "rank": data
+                "rank": data or []
             })
             time.sleep(0.5) # Be nice to Cricbuzz
 

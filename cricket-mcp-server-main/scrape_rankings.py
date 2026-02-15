@@ -1,45 +1,45 @@
-import requests
-from bs4 import BeautifulSoup
-import time
+import json
+from scraper import get_icc_rankings
 
-def test_fetch():
-    urls = [
-        "https://www.cricbuzz.com/",
-        "https://www.cricbuzz.com/cricket-stats/icc-rankings/men/batting"
-    ]
+def generate_rankings_json():
+    all_rankings = []
+    # Added teams to categories
+    categories = {'batting': 'Batsmen', 'bowling': 'Bowlers', 'allrounder': 'All-Rounders', 'teams': 'Teams'} 
+    formats = ['test', 'odi', 't20']
     
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Referer": "https://www.google.com/"
-    }
+    print("Generating rankings snapshot...")
     
-    for url in urls:
-        print(f"\nFetching {url}...")
-        try:
-            r = requests.get(url, headers=headers, timeout=10)
-            print(f"Status: {r.status_code}")
-            print(f"Content Length: {len(r.content)}")
+    for api_cat, display_cat in categories.items():
+        for fmt in formats:
+            print(f"Fetching {display_cat} - {fmt}...")
+            scrape_cat = 'all-rounder' if api_cat == 'allrounder' else api_cat
+            # Fix: scraper.py expects 'all-rounder' not 'allrounder'
             
-            soup = BeautifulSoup(r.content, 'html.parser')
-            print(f"Title: {soup.title.string.strip() if soup.title else 'No Title'}")
+            if api_cat == 'teams': 
+                scrape_cat = 'teams'
             
-            if "rankings" in url:
-                # Dump structure
-                print("Looking for 'cb-rank-tbl' class...")
-                rows = soup.find_all(class_="cb-rank-tbl")
-                print(f"Found {len(rows)} elements with 'cb-rank-tbl'.")
-                
-                # Look for 'Kane Williamson'
-                kw = soup.find(string=lambda t: t and "Kane Williamson" in t)
-                if kw:
-                    print(f"Found Kane Williamson in: {kw.parent}")
-                else:
-                    print("Kane Williamson NOT found.")
-                    
-        except Exception as e:
-            print(f"Error fetching {url}: {e}")
+            # Formats for teams might be different? Scraper handles it?
+            # Scraper `get_icc_rankings` handles `teams` logic?
+            # Let's check scraper.py logic for teams. 
+            # In Step 1208 snippet: "if not player_links and category == 'teams': pass"
+            # It seems teams logic wasn't fully implemented in scraper.py?
+            # I will skip teams if it returns empty.
+            
+            data = get_icc_rankings(scrape_cat, fmt)
+            
+            if data:
+                all_rankings.append({
+                    "type": display_cat,
+                    "format": fmt.upper(),
+                    "rank": data
+                })
+            else:
+                print(f"Failed or empty: {display_cat} - {fmt}")
+            
+    with open("rankings.json", "w") as f:
+        json.dump(all_rankings, f, indent=2)
+        
+    print(f"Saved {len(all_rankings)} categories to rankings.json")
 
 if __name__ == "__main__":
-    test_fetch()
+    generate_rankings_json()
