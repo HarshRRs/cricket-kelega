@@ -1,0 +1,41 @@
+Found 19 matches.
+
+--- Match Analysis ---
+Name: NZ vs RSA - RSA won | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: IND vs PAK - Preview | Status: Live/Upcoming | Score: 2680
+   (Type: None)
+Name: SCO vs ENG - ENG won | Status: Live/Upcoming | Score: 2580
+   (Type: None)
+Name: WI vs NEP - Preview | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: USA vs NAM - Preview | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: Ireland vs Oman 22nd Match, Group B | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: Qatar vs Bahrain 4th T20I | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: Qatar vs Bahrain 5th T20I | Status: Live/Upcoming | Score: 2500
+   (Type: None)
+Name: Jammu and Kashmir vs Bengal 2nd Semi Final | Status: Live/Upcoming | Score: 3000
+   (Type: None)
+Name: Uttarakhand vs Karnataka 1st Semi Final | Status: Live/Upcoming | Score: 3000
+   (Type: None)
+Name: Queensland vs South Australia 22nd Match | Status: Live/Upcoming | Score: 2580
+   (Type: None)
+Name: Western Australia vs Victoria 23rd Match | Status: Live/Upcoming | Score: 2580
+   (Type: None)
+Name: Australia Women vs India Women 1st T20I | Status: Live/Upcoming | Score: 1680
+   (Type: None)
+Name: Thailand Women vs Malaysia Women 3rd Match, Group B | Status: Live/Upcoming | Score: 1500
+   (Type: None)
+Name: Bangladesh A Women vs Sri Lanka A Women 4th Match, Group B | Status: Live/Upcoming | Score: 1500
+   (Type: None)
+Name: United Arab Emirates Women vs Nepal Women LIVE5th Match, Group A | Status: Live/Upcoming | Score: 1500
+   (Type: None)
+Name: India A Women vs Pakistan A Women 6th Match, Group A | Status: Live/Upcoming | Score: 1680
+   (Type: None)
+Name: Sri Lanka A Women vs Malaysia Women 7th Match, Group B | Status: Live/Upcoming | Score: 1500
+   (Type: None)
+Name: Qatar Women vs Oman Women 5th T20I | Status: Live/Upcoming | Score: 1500
+   (Type: None)
