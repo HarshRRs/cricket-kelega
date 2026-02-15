@@ -12,6 +12,7 @@ import os
 import time
 import threading
 import urllib.parse
+import scraper
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests as http_requests
@@ -119,81 +120,151 @@ def news_api(params=None):
 # =============================================================================
 @app.route('/live')
 def get_live():
-    """Get live/current cricket matches with real scores."""
-    cached = cache.get("live", LIVE_TTL)
-    if cached is not None:
-        return jsonify(cached)
-
-    data = cricket_api('currentMatches')
-    if 'error' in data:
-        # Try matches endpoint as fallback
-        data = cricket_api('matches', {'offset': 0})
+    """Get live scores from API + Scraper (Hybrid Mode)."""
+    # 1. Fetch Official API Data
+    official_data = cache.get("live_matches", LIVE_TTL)
+    if not official_data:
+        data = cricket_api('currentMatches')
         if 'error' in data:
-            return jsonify([])
+            # Try matches endpoint as fallback
+            data = cricket_api('matches', {'offset': 0})
+            
+        if 'error' not in data:
+            official_data = data.get('data', [])
+            cache.set("live_matches", official_data, ttl_seconds=LIVE_TTL)
+        else:
+            official_data = []
 
-    matches = data.get('data', [])
-    transformed = []
+    # 2. Fetch Scraper Data (for missing matches like Ind vs Pak)
+    scraped_data = cache.get("scraped_live", LIVE_TTL) # Use same TTL
+    if not scraped_data:
+        try:
+            scraped_data = scraper.get_cricbuzz_matches() # Returns list
+            cache.set("scraped_live", scraped_data, ttl_seconds=LIVE_TTL)
+        except Exception as e:
+            print(f"Scraper failed: {e}")
+            scraped_data = []
 
-    for i, m in enumerate(matches):
+    final_list = []
+    
+    # 3. Process Official Matches
+    # Set of normalized match names to avoid duplicates
+    official_match_names = set()
+    
+    for m in official_data:
         match_id = m.get('id', '')
-        match_name = m.get('name', 'Match')
-        match_status = m.get('status', '')
-        match_type = m.get('matchType', '')
-        venue = m.get('venue', '')
-        date = m.get('date', '')
-
+        name = m.get('name', 'Match')
+        official_match_names.add(name.lower().replace(" ", ""))
+        
         # Determine status
         if m.get('matchStarted', False) and not m.get('matchEnded', False):
             status_text = 'Live'
         elif m.get('matchEnded', False):
             status_text = 'Completed'
         else:
-            status_text = 'Upcoming'
+            status_text = m.get('status', 'Upcoming')
 
         # Build team scores
         teams = m.get('teams', [])
         score_list = m.get('score', [])
-
         score = []
-        for j, team_name in enumerate(teams[:2]):
+        for team_name in teams[:2]:
             team_score = {"title": team_name, "r": "-", "w": "-", "o": "-"}
-
-            # Find matching score entry
             for s in score_list:
                 if team_name in s.get('inning', ''):
                     team_score["r"] = str(s.get('r', '-'))
                     team_score["w"] = str(s.get('w', '-'))
                     team_score["o"] = str(s.get('o', '-'))
                     break
-
             score.append(team_score)
-
-        # Ensure we always have 2 teams
+            
         while len(score) < 2:
             score.append({"title": f"Team {len(score) + 1}", "r": "-", "w": "-", "o": "-"})
             
         # Generate Google Search URL for match details (fallback)
         try:
-            search_query = urllib.parse.quote(f"{match_name} cricket score")
+            search_query = urllib.parse.quote(f"{name} cricket score")
             match_url = f"https://www.google.com/search?q={search_query}"
         except:
-            match_url = ""
+             match_url = ""
 
-        transformed.append({
-            "id": match_id or (i + 1),
-            "name": match_name,
-            "teams": teams[:2] if teams else ["TBA", "TBA"],
-            "score": score,
+        final_list.append({
+            "id": match_id,
+            "name": name,
+            "matchType": m.get('matchType', ''),
             "status": status_text,
-            "matchType": match_type,
-            "venue": venue,
-            "date": date,
-            "statusText": match_status,
-            "url": match_url
+            "venue": m.get('venue', ''),
+            "date": m.get('date', ''),
+            "score": score,
+            "is_premium": False, # Official
+            "source": "official",
+            "details_url": match_url
+        })
+        
+    # 4. Append Scraped Matches (Premium)
+    for sm in scraped_data:
+        # Check duplicate by name (fuzzy)
+        s_name_norm = sm["name"].lower().replace(" ", "")
+        
+        # Simple fuzzy check: if one is substring of another
+        is_duplicate = False
+        for o_name in official_match_names:
+            if s_name_norm in o_name or o_name in s_name_norm:
+                is_duplicate = True
+                break
+        
+        if is_duplicate:
+            # Optimization: If we find a match in scraper that corresponds to official,
+            # we COULD attach the Cricbuzz ID to the official match to enable commentary!
+            # But let's keep it simple for now. Duplicate prevention is good.
+            # Actually, user WANTS commentary. If existing match lacks commentary, we fail.
+            # Strategy: If duplicate, we ADD `cricbuzz_id` to the EXISTING official match in `final_list`.
+            # Find the match in final_list
+            for fm in final_list:
+                fm_norm = fm["name"].lower().replace(" ", "")
+                if s_name_norm in fm_norm or fm_norm in s_name_norm:
+                    fm["cricbuzz_id"] = sm["id"]
+                    fm["is_premium"] = True # Enable commentary!
+                    break
+            continue
+
+        # If not duplicate, add as new Premium Match
+        # Format score string "120/4 (15.2)" to object?
+        # Scraper returns single string score "120/4". We put it in first team?
+        score_obj = [{"title": sm["score"], "r": sm["score"], "w": "", "o": ""}, {"title": "", "r": "", "w": "", "o": ""}]
+        
+        final_list.insert(0, { # Add to top!
+            "id": sm["id"],
+            "name": sm["name"],
+            "matchType": "premium",
+            "status": sm["status"],
+            "venue": "Cricbuzz Data",
+            "date": "Today",
+            "score": score_obj,
+            "is_premium": True,
+            "source": "cricbuzz",
+            "cricbuzz_id": sm["id"]
         })
 
-    cache.set("live", transformed)
-    return jsonify(transformed)
+    return jsonify(final_list)
+
+@app.route('/commentary/<match_id>')
+def get_commentary(match_id):
+    """Get commentary for a match."""
+    # Cache key
+    cache_key = f"comm_{match_id}"
+    cached = cache.get(cache_key, 60)
+    if cached:
+         return jsonify({"status": "success", "data": cached})
+         
+    try:
+        data = scraper.get_commentary(match_id)
+        cache.set(cache_key, data, ttl_seconds=60)
+        return jsonify({"status": "success", "data": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
 
 
 # =============================================================================
