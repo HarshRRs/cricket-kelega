@@ -311,16 +311,14 @@ def get_schedule():
 @app.route('/rankings')
 def get_rankings():
     """Get ICC rankings."""
-    # 1. Check Cache
-    cache_key = f"rankings_{len(categories)*len(formats)}" # Simple key or just "rankings"
-    # Actually we want to cache ALL so we don't scrape on every request?
-    # Backend iterates.
-    # The existing code structure iterates and returns ONE list.
+    # 1. Define constants
+    categories = {'batting': 'Batsmen', 'bowling': 'Bowlers', 'allrounder': 'All-Rounders'}
+    formats = ['test', 'odi', 't20']
+
+    # 2. Check Cache
+    cache_key = "rankings_all" 
     
-    # We should scrape on demand? No, too slow (3 requests * 3 formats?).
-    # Better: Scrape ALL at once and cache.
-    
-    cached = cache.get("rankings", RANKINGS_TTL)
+    cached = cache.get(cache_key, RANKINGS_TTL)
     if cached is not None:
          return jsonify(cached)
          
